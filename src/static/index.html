@@ -39,6 +39,27 @@
         </form>
         <div id="message" class="hidden"></div>
       </section>
+
+      <section id="user-creation-container">
+        <h3>Create New User</h3>
+        <form id="user-form">
+          <div class="form-group">
+            <label for="new-email">Email:</label>
+            <input type="email" id="new-email" required placeholder="user@mergington.edu" />
+          </div>
+          <div class="form-group">
+            <label for="role">Role:</label>
+            <select id="role" required>
+              <option value="">-- Select a role --</option>
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          <button type="submit">Create User</button>
+        </form>
+        <div id="user-message" class="hidden"></div>
+      </section>
     </main>
 
     <footer>
