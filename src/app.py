@@ -5,20 +5,20 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
+from typing import Literal
 import os
 from pathlib import Path
 
+app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities and managing users/roles")
 
 # Mount the static files directory
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
-
-from typing import Literal
 
 # In-memory user database
 # Example: {"emma@mergington.edu": {"role": "student"}, ...}
@@ -50,19 +50,6 @@ users = {
 
 # In-memory activity database
 activities = {
-from fastapi import Query
-@app.get("/users")
-def list_users():
-    """List all users and their roles"""
-    return users
-
-@app.post("/users/create")
-def create_user(email: str = Query(...), role: Literal["student", "teacher", "staff"] = Query(...)):
-    """Create a new user with a role"""
-    if email in users:
-        raise HTTPException(status_code=400, detail="User already exists")
-    users[email] = {"role": role}
-    return {"message": f"Created user {email} with role {role}"}
     "Chess Club": {
         "description": "Learn strategies and compete in chess tournaments",
         "schedule": "Fridays, 3:30 PM - 5:00 PM",
@@ -118,6 +105,21 @@ def create_user(email: str = Query(...), role: Literal["student", "teacher", "st
         "participants": ["charlotte@mergington.edu", "henry@mergington.edu"]
     }
 }
+
+
+@app.get("/users")
+def list_users():
+    """List all users and their roles"""
+    return users
+
+
+@app.post("/users/create")
+def create_user(email: str = Query(...), role: Literal["student", "teacher", "staff"] = Query(...)):
+    """Create a new user with a role"""
+    if email in users:
+        raise HTTPException(status_code=400, detail="User already exists")
+    users[email] = {"role": role}
+    return {"message": f"Created user {email} with role {role}"}
 
 
 @app.get("/")
