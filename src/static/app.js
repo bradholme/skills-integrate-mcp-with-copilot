@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const activitySelect = document.getElementById("activity");
   const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
+  const userForm = document.getElementById("user-form");
+  const userMessageDiv = document.getElementById("user-message");
 
   // Function to fetch activities from API
   async function fetchActivities() {
@@ -73,11 +75,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const activity = button.getAttribute("data-activity");
     const email = button.getAttribute("data-email");
 
+    // Prompt for teacher credentials
+    const teacherEmail = prompt(
+      `To unregister ${email} from ${activity}, please enter your teacher email:`
+    );
+    
+    if (!teacherEmail) {
+      return; // User cancelled
+    }
+
     try {
       const response = await fetch(
         `/activities/${encodeURIComponent(
           activity
-        )}/unregister?email=${encodeURIComponent(email)}`,
+        )}/unregister?email=${encodeURIComponent(email)}&acting_user=${encodeURIComponent(teacherEmail)}`,
         {
           method: "DELETE",
         }
@@ -152,6 +163,46 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Handle user creation form submission
+  userForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById("new-email").value;
+    const role = document.getElementById("role").value;
+
+    try {
+      const response = await fetch(
+        `/users/create?email=${encodeURIComponent(email)}&role=${encodeURIComponent(role)}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        userMessageDiv.textContent = result.message;
+        userMessageDiv.className = "success";
+        userForm.reset();
+      } else {
+        userMessageDiv.textContent = result.detail || "An error occurred";
+        userMessageDiv.className = "error";
+      }
+
+      userMessageDiv.classList.remove("hidden");
+
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        userMessageDiv.classList.add("hidden");
+      }, 5000);
+    } catch (error) {
+      userMessageDiv.textContent = "Failed to create user. Please try again.";
+      userMessageDiv.className = "error";
+      userMessageDiv.classList.remove("hidden");
+      console.error("Error creating user:", error);
     }
   });
 
