@@ -73,11 +73,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const activity = button.getAttribute("data-activity");
     const email = button.getAttribute("data-email");
 
+    // Prompt for teacher email to authenticate the unregister action
+    const teacherEmail = prompt(
+      `To unregister ${email} from ${activity}, please enter your teacher email:`
+    );
+
+    if (!teacherEmail) {
+      // User cancelled the prompt
+      return;
+    }
+
     try {
       const response = await fetch(
         `/activities/${encodeURIComponent(
           activity
-        )}/unregister?email=${encodeURIComponent(email)}`,
+        )}/unregister?email=${encodeURIComponent(email)}&acting_user=${encodeURIComponent(teacherEmail)}`,
         {
           method: "DELETE",
         }
