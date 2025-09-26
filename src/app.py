@@ -11,16 +11,58 @@ from fastapi.responses import RedirectResponse
 import os
 from pathlib import Path
 
-app = FastAPI(title="Mergington High School API",
-              description="API for viewing and signing up for extracurricular activities")
+              description="API for viewing and signing up for extracurricular activities and managing users/roles")
 
 # Mount the static files directory
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
 
+from typing import Literal
+
+# In-memory user database
+# Example: {"emma@mergington.edu": {"role": "student"}, ...}
+users = {
+    "emma@mergington.edu": {"role": "student"},
+    "sophia@mergington.edu": {"role": "student"},
+    "michael@mergington.edu": {"role": "student"},
+    "daniel@mergington.edu": {"role": "student"},
+    "john@mergington.edu": {"role": "student"},
+    "olivia@mergington.edu": {"role": "student"},
+    "liam@mergington.edu": {"role": "student"},
+    "noah@mergington.edu": {"role": "student"},
+    "ava@mergington.edu": {"role": "student"},
+    "mia@mergington.edu": {"role": "student"},
+    "amelia@mergington.edu": {"role": "student"},
+    "harper@mergington.edu": {"role": "student"},
+    "ella@mergington.edu": {"role": "student"},
+    "scarlett@mergington.edu": {"role": "student"},
+    "james@mergington.edu": {"role": "student"},
+    "benjamin@mergington.edu": {"role": "student"},
+    "charlotte@mergington.edu": {"role": "student"},
+    "henry@mergington.edu": {"role": "student"},
+    # Example teachers
+    "teacher1@mergington.edu": {"role": "teacher"},
+    "teacher2@mergington.edu": {"role": "teacher"},
+    # Example staff
+    "admin@mergington.edu": {"role": "staff"}
+}
+
 # In-memory activity database
 activities = {
+from fastapi import Query
+@app.get("/users")
+def list_users():
+    """List all users and their roles"""
+    return users
+
+@app.post("/users/create")
+def create_user(email: str = Query(...), role: Literal["student", "teacher", "staff"] = Query(...)):
+    """Create a new user with a role"""
+    if email in users:
+        raise HTTPException(status_code=400, detail="User already exists")
+    users[email] = {"role": role}
+    return {"message": f"Created user {email} with role {role}"}
     "Chess Club": {
         "description": "Learn strategies and compete in chess tournaments",
         "schedule": "Fridays, 3:30 PM - 5:00 PM",
@@ -95,6 +137,10 @@ def signup_for_activity(activity_name: str, email: str):
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
 
+    # Validate user exists and is a student
+    if email not in users or users[email]["role"] != "student":
+        raise HTTPException(status_code=403, detail="Only students can sign up for activities (user not found or not a student)")
+
     # Get the specific activity
     activity = activities[activity_name]
 
@@ -111,11 +157,15 @@ def signup_for_activity(activity_name: str, email: str):
 
 
 @app.delete("/activities/{activity_name}/unregister")
-def unregister_from_activity(activity_name: str, email: str):
-    """Unregister a student from an activity"""
+def unregister_from_activity(activity_name: str, email: str, acting_user: str = Query(...)):
+    """Unregister a student from an activity. Only teachers can perform this action."""
     # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Validate acting user exists and is a teacher
+    if acting_user not in users or users[acting_user]["role"] != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can unregister students from activities")
 
     # Get the specific activity
     activity = activities[activity_name]
@@ -129,4 +179,4 @@ def unregister_from_activity(activity_name: str, email: str):
 
     # Remove student
     activity["participants"].remove(email)
-    return {"message": f"Unregistered {email} from {activity_name}"}
+    return {"message": f"Unregistered {email} from {activity_name} by {acting_user}"}
